@@ -21414,7 +21414,7 @@
     "info_でんき": 0,
     "info_WS": 0,
     "info_モバイル": 0,
-    "info_生活": 0
+    "info_生活": 1
   },
   {
     "id": 244896690,
@@ -23679,7 +23679,7 @@
     "info_ひかり": 0,
     "info_でんき": 0,
     "info_WS": 0,
-    "info_モバイル": 0,
+    "info_モバイル": 1,
     "info_生活": 0
   },
   {
@@ -25110,7 +25110,7 @@
     "info_でんき": 0,
     "info_WS": 0,
     "info_モバイル": 0,
-    "info_生活": 0
+    "info_生活": 1
   },
   {
     "id": 245856896,
@@ -25170,8 +25170,8 @@
   {
     "id": 245879509,
     "created_at": "2026-03-31 11:32",
-    "blocked_flag": 0,
-    "blocked_at": "",
+    "blocked_flag": 1,
+    "blocked_at": "2026-04-01 09:00",
     "info_ひかり": 0,
     "info_でんき": 0,
     "info_WS": 0,
@@ -25324,8 +25324,8 @@
   {
     "id": 245896488,
     "created_at": "2026-03-31 13:19",
-    "blocked_flag": 0,
-    "blocked_at": "",
+    "blocked_flag": 1,
+    "blocked_at": "2026-03-31 21:51",
     "info_ひかり": 0,
     "info_でんき": 0,
     "info_WS": 0,
@@ -25456,8 +25456,8 @@
   {
     "id": 245902542,
     "created_at": "2026-03-31 14:03",
-    "blocked_flag": 0,
-    "blocked_at": "",
+    "blocked_flag": 1,
+    "blocked_at": "2026-03-31 19:11",
     "info_ひかり": 0,
     "info_でんき": 0,
     "info_WS": 0,
@@ -25522,8 +25522,8 @@
   {
     "id": 245915742,
     "created_at": "2026-03-31 15:39",
-    "blocked_flag": 0,
-    "blocked_at": "",
+    "blocked_flag": 1,
+    "blocked_at": "2026-03-31 21:27",
     "info_ひかり": 0,
     "info_でんき": 0,
     "info_WS": 0,
@@ -25533,8 +25533,8 @@
   {
     "id": 245915746,
     "created_at": "2026-03-31 15:39",
-    "blocked_flag": 0,
-    "blocked_at": "",
+    "blocked_flag": 1,
+    "blocked_at": "2026-03-31 21:27",
     "info_ひかり": 0,
     "info_でんき": 0,
     "info_WS": 0,
@@ -25614,15 +25614,15 @@
     "blocked_at": "",
     "info_ひかり": 0,
     "info_でんき": 0,
-    "info_WS": 0,
+    "info_WS": 1,
     "info_モバイル": 0,
-    "info_生活": 0
+    "info_生活": 1
   },
   {
     "id": 245922771,
     "created_at": "2026-03-31 16:28",
-    "blocked_flag": 0,
-    "blocked_at": "",
+    "blocked_flag": 1,
+    "blocked_at": "2026-03-31 23:03",
     "info_ひかり": 0,
     "info_でんき": 0,
     "info_WS": 0,
@@ -25737,7 +25737,7 @@
     "info_でんき": 0,
     "info_WS": 0,
     "info_モバイル": 0,
-    "info_生活": 0
+    "info_生活": 1
   },
   {
     "id": 245932215,
@@ -25826,5 +25826,115 @@
     "info_WS": 0,
     "info_モバイル": 0,
     "info_生活": 0
+  },
+  {
+    "id": 245937858,
+    "created_at": "2026-03-31 18:03",
+    "blocked_flag": 0,
+    "blocked_at": "",
+    "info_ひかり": 0,
+    "info_でんき": 0,
+    "info_WS": 0,
+    "info_モバイル": 0,
+    "info_生活": 0
+  },
+  {
+    "id": 245938604,
+    "created_at": "2026-03-31 18:07",
+    "blocked_flag": 0,
+    "blocked_at": "",
+    "info_ひかり": 0,
+    "info_でんき": 0,
+    "info_WS": 0,
+    "info_モバイル": 0,
+    "info_生活": 0
+  },
+  {
+    "id": 245939522,
+    "created_at": "2026-03-31 18:12",
+    "blocked_flag": 0,
+    "blocked_at": "",
+    "info_ひかり": 0,
+    "info_でんき": 0,
+    "info_WS": 0,
+    "info_モバイル": 0,
+    "info_生活": 0
+  },
+  {
+    "id": 245940790,
+    "created_at": "2026-03-31 18:20",
+    "blocked_flag": 0,
+    "blocked_at": "",
+    "info_ひかり": 0,
+    "info_でんき": 0,
+    "info_WS": 0,
+    "info_モバイル": 0,
+    "info_生活": 0
+  },
+  {
+    "id": 245941725,
+    "created_at": "2026-03-31 18:26",
+    "blocked_flag": 0,
+    "blocked_at": "",
+    "info_ひかり": 0,
+    "info_でんき": 0,
+    "info_WS": 0,
+    "info_モバイル": 0,
+    "info_生活": 0
+  },
+  {
+    "id": 245962307,
+    "created_at": "2026-03-31 20:16",
+    "blocked_flag": 0,
+    "blocked_at": "",
+    "info_ひかり": 0,
+    "info_でんき": 0,
+    "info_WS": 0,
+    "info_モバイル": 0,
+    "info_生活": 1
+  },
+  {
+    "id": 245993812,
+    "created_at": "2026-03-31 22:56",
+    "blocked_flag": 0,
+    "blocked_at": "",
+    "info_ひかり": 0,
+    "info_でんき": 0,
+    "info_WS": 0,
+    "info_モバイル": 0,
+    "info_生活": 1
+  },
+  {
+    "id": 245996167,
+    "created_at": "2026-03-31 23:12",
+    "blocked_flag": 0,
+    "blocked_at": "",
+    "info_ひかり": 0,
+    "info_でんき": 0,
+    "info_WS": 0,
+    "info_モバイル": 1,
+    "info_生活": 1
+  },
+  {
+    "id": 245998969,
+    "created_at": "2026-03-31 23:33",
+    "blocked_flag": 0,
+    "blocked_at": "",
+    "info_ひかり": 0,
+    "info_でんき": 0,
+    "info_WS": 0,
+    "info_モバイル": 0,
+    "info_生活": 1
+  },
+  {
+    "id": 245999526,
+    "created_at": "2026-03-31 23:38",
+    "blocked_flag": 0,
+    "blocked_at": "",
+    "info_ひかり": 0,
+    "info_でんき": 0,
+    "info_WS": 0,
+    "info_モバイル": 0,
+    "info_生活": 1
   }
 ]
