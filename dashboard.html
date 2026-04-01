@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LINE公式アカウント ダッシュボード</title>
+
+  <!-- ========================================================
+       外部ライブラリ：Chart.js（グラフ描画）
+       CDNから読み込んでいます。インターネット接続が必要です。
+       ======================================================== -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* ========================================================
+       CSS変数：色・フォントなどデザインの共通設定
+       ここを変更するとサイト全体のデザインが変わります
+       ======================================================== */
+    :root {
+      --color-bg:        #F4F6FA;
+      --color-surface:   #FFFFFF;
+      --color-border:    #E2E8F0;
+      --color-text:      #1A202C;
+      --color-muted:     #718096;
+      --color-accent:    #06B6D4;       /* ティール：メインアクセント */
+      --color-accent2:   #0EA5E9;       /* スカイブルー */
+      --color-line:      #00B900;       /* LINE公式グリーン */
+      --color-warning:   #F59E0B;
+      --color-danger:    #EF4444;
+      --radius-card:     14px;
+      --shadow-card:     0 2px 12px rgba(0,0,0,0.07);
+      --font-main:       'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+    }
+
+    /* リセット・基本スタイル */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-main);
+      background: var(--color-bg);
+      color: var(--color-text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ========================================================
+       ヘッダー
+       ======================================================== */
+    .header {
+      background: var(--color-surface);
+      border-bottom: 2px solid var(--color-line);
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-logo {
+      width: 36px;
+      height: 36px;
+      background: var(--color-line);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+    .header-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--color-text);
+    }
+    .header-subtitle {
+      font-size: 12px;
+      color: var(--color-muted);
+      margin-top: 1px;
+    }
+    .header-right {
+      font-size: 12px;
+      color: var(--color-muted);
+      text-align: right;
+    }
+    #last-updated {
+      font-weight: 600;
+      color: var(--color-accent);
+    }
+
+    /* ========================================================
+       メインレイアウト
+       ======================================================== */
+    .main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 24px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* ========================================================
+       カードコンポーネント
+       ======================================================== */
+    .card {
+      background: var(--color-surface);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--color-border);
+      padding: 28px 32px;
+    }
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .card-title-block {}
+    .card-num {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--color-accent);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--color-text);
+    }
+    .card-desc {
+      font-size: 12px;
+      color: var(--color-muted);
+      margin-top: 3px;
+    }
+
+    /* ========================================================
+       グラフキャンバス
+       ======================================================== */
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+    }
+    .chart-wrap canvas {
+      width: 100% !important;
+    }
+
+    /* ========================================================
+       ④ フィルター付きグラフのコントロール
+       ======================================================== */
+    .filter-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .filter-control label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-muted);
+      white-space: nowrap;
+    }
+    .filter-control select {
+      font-family: var(--font-main);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text);
+      background: var(--color-bg);
+      border: 1.5px solid var(--color-border);
+      border-radius: 8px;
+      padding: 7px 12px;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+      min-width: 160px;
+    }
+    .filter-control select:focus {
+      border-color: var(--color-accent);
+    }
+
+    /* ========================================================
+       円グラフ専用：凡例レイアウト
+       ======================================================== */
+    .pie-layout {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+    .pie-layout .chart-wrap {
+      max-width: 300px;
+      flex-shrink: 0;
+    }
+    /* グラフ③：コンパクトレイアウト（グラフ幅に合わせて収縮） */
+    .pie-layout-compact {
+      display: flex;
+      justify-content: center;
+    }
+
+    /* ========================================================
+       ローディング・エラー表示
+       ======================================================== */
+    .status-overlay {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+      gap: 12px;
+      color: var(--color-muted);
+      text-align: center;
+    }
+    .status-overlay .icon {
+      font-size: 36px;
+    }
+    .status-overlay .msg {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .status-overlay .sub {
+      font-size: 12px;
+      color: var(--color-muted);
+    }
+    .loading-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--color-border);
+      border-top-color: var(--color-accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ========================================================
+       概要バナー（総登録者数・期間）
+       ======================================================== */
+    .summary-bar {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .summary-item {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+      padding: 18px 24px;
+      flex: 1;
+      min-width: 160px;
+      box-shadow: var(--shadow-card);
+    }
+    .summary-item .label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--color-muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .summary-item .value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--color-text);
+      letter-spacing: -0.5px;
+    }
+    .summary-item .value span {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-muted);
+      margin-left: 4px;
+    }
+    .summary-item .sub {
+      font-size: 11px;
+      color: var(--color-muted);
+      margin-top: 4px;
+    }
+    .summary-item.accent .value {
+      color: var(--color-line);
+    }
+
+    /* レスポンシブ対応 */
+    @media (max-width: 640px) {
+      .header { padding: 0 16px; }
+      .main { padding: 16px 12px 40px; }
+      .card { padding: 20px 16px; }
+      .pie-layout { flex-direction: column; }
+      .pie-layout .chart-wrap { max-width: 100%; }
+    }
+
+    /* ========================================================
+       【追加CSS】グラフ③⑤ 横並び2カラムレイアウト
+       スマホ（640px以下）では縦並びに切り替わります
+       ======================================================== */
+    .two-col-layout {
+      display: flex;
+      gap: 24px;
+      align-items: stretch;
+    }
+    .two-col-card {
+      flex: 1;
+      min-width: 0; /* flex子要素のはみ出し防止 */
+    }
+    @media (max-width: 768px) {
+      .two-col-layout {
+        flex-direction: column; /* スマホでは縦並びに */
+      }
+    }
+    /* /追加CSS */
+  </style>
+</head>
+<body>
+
+<!-- ========================================================
+     ヘッダー
+     ======================================================== -->
+<header class="header">
+  <div class="header-left">
+    <div class="header-logo">L</div>
+    <div>
+      <div class="header-title">LINE公式アカウント ダッシュボード</div>
+      <div class="header-subtitle">社内用 集計レポート</div>
+    </div>
+  </div>
+  <div class="header-right">
+    最終更新：<span id="last-updated">読込中…</span>
+  </div>
+</header>
+
+<!-- ========================================================
+     メインコンテンツ
+     ======================================================== -->
+<main class="main" id="main-content">
+
+  <!-- ローディング表示（データ取得中に表示） -->
+  <div id="loading-view" class="card">
+    <div class="status-overlay">
+      <div class="loading-spinner"></div>
+      <div class="msg">データを読み込んでいます...</div>
+      <div class="sub">data.json を取得中です</div>
+    </div>
+  </div>
+
+  <!-- エラー表示（データ取得失敗時に表示） -->
+  <div id="error-view" class="card" style="display:none;">
+    <div class="status-overlay">
+      <div class="icon">⚠️</div>
+      <div class="msg" id="error-message">データの読み込みに失敗しました</div>
+      <div class="sub">data.json ファイルが正しいフォルダにあるか確認してください</div>
+    </div>
+  </div>
+
+  <!-- データが0件の場合に表示 -->
+  <div id="empty-view" class="card" style="display:none;">
+    <div class="status-overlay">
+      <div class="icon">📭</div>
+      <div class="msg">データがありません</div>
+      <div class="sub">data.json にレコードが含まれていません</div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       ダッシュボード本体（データ読込後に表示）
+       ======================================================== -->
+  <div id="dashboard" style="display:none; display:flex; flex-direction:column; gap:24px;">
+
+    <!-- 概要バナー -->
+    <div class="summary-bar" id="summary-bar">
+      <div class="summary-item accent">
+        <div class="label">総登録者数</div>
+        <div class="value" id="kpi-total">—<span>人</span></div>
+        <div class="sub" id="kpi-period">—</div>
+      </div>
+      <!-- ========================================================
+           【追加①】ブロック人数KPIカード
+           blocked_flag === 1 のレコード数を表示します
+           ======================================================== -->
+      <div class="summary-item" style="border-left: 3px solid var(--color-danger);">
+        <div class="label">ブロック人数</div>
+        <div class="value" id="kpi-blocked" style="color: var(--color-danger);">—<span>人</span></div>
+        <div class="sub" id="kpi-blocked-rate">—</div>
+      </div>
+      <!-- /追加① -->
+      <div class="summary-item">
+        <div class="label">集計期間</div>
+        <div class="value" id="kpi-days" style="font-size:20px;">—<span>日間</span></div>
+        <div class="sub" id="kpi-date-range">—</div>
+      </div>
+      <div class="summary-item">
+        <div class="label">1日平均登録数</div>
+        <div class="value" id="kpi-avg">—<span>人/日</span></div>
+        <div class="sub">全期間平均</div>
+      </div>
+    </div>
+
+    <!-- ① 日別推移グラフ -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title-block">
+          <div class="card-num">グラフ ①</div>
+          <div class="card-title">日別 新規登録者数 ／ 累計登録者数</div>
+          <div class="card-desc">棒グラフ：その日の新規登録数　折れ線：累計登録数（右軸）</div>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:320px;">
+        <canvas id="chart-daily"></canvas>
+      </div>
+    </div>
+
+    <!-- ② 時間帯別登録数グラフ -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title-block">
+          <div class="card-num">グラフ ②</div>
+          <div class="card-title">時間帯別 登録数（全期間合計）</div>
+          <div class="card-desc">登録が多い時間帯を把握できます（created_at の時刻から集計）</div>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:280px;">
+        <canvas id="chart-hourly"></canvas>
+      </div>
+    </div>
+
+    <!-- ④ 日付×時間帯別（フィルター付き）← 順序変更：③の前に移動 -->
+    <!-- ========================================================
+         【変更③】グラフ④を元の③位置（ボタン別円グラフの上）に移動
+         ======================================================== -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title-block">
+          <div class="card-num">グラフ ④</div>
+          <div class="card-title">日付別 時間帯グラフ（フィルター）</div>
+          <div class="card-desc">特定の日付を選択して、その日の時間帯別登録数を確認できます</div>
+        </div>
+        <!-- 日付選択プルダウン -->
+        <div class="filter-control">
+          <label for="date-select">📅 日付を選択：</label>
+          <select id="date-select" onchange="onDateFilterChange()">
+            <option value="">読み込み中...</option>
+          </select>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:260px;">
+        <canvas id="chart-filtered"></canvas>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         【変更③】③ボタン別円グラフ と ⑤日別ブロック数 を横並び配置
+         .two-col-layout クラスで flex 2カラムにする
+         スマホでは縦並び（レスポンシブ対応）
+         ======================================================== -->
+    <div class="two-col-layout">
+
+      <!-- ③ ボタン別アクション割合（円グラフ） -->
+      <div class="card two-col-card">
+        <div class="card-header">
+          <div class="card-title-block">
+            <div class="card-num">グラフ ③</div>
+            <div class="card-title">ボタン別 アクション割合</div>
+            <div class="card-desc">各「info_○○」列の合計タップ数を集計した円グラフ</div>
+          </div>
+        </div>
+        <!-- グラフ幅をコンパクトに：pie-layout-compactクラスで中央寄せ -->
+        <div class="pie-layout-compact">
+          <div class="chart-wrap" style="height:300px; width:300px; flex-shrink:0;">
+            <canvas id="chart-pie"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ⑤ 日別ブロック数グラフ（新規追加） -->
+      <!-- ========================================================
+           【追加②】グラフ⑤：日別ブロック数
+           blocked_flag === 1 のデータを blocked_at で日付集計
+           ======================================================== -->
+      <div class="card two-col-card">
+        <div class="card-header">
+          <div class="card-title-block">
+            <div class="card-num">グラフ ⑤</div>
+            <div class="card-title">日別 ブロック数</div>
+            <div class="card-desc">blocked_flag が 1 のレコードを blocked_at の日付で集計</div>
+          </div>
+        </div>
+        <div class="chart-wrap" style="height:300px;">
+          <canvas id="chart-blocked"></canvas>
+        </div>
+      </div>
+      <!-- /追加② -->
+
+    </div><!-- /two-col-layout -->
+
+  </div><!-- /dashboard -->
+</main>
+
+<script>
+/* ============================================================
+   設定エリア
+   ============================================================
+   ▼ データファイルのパスをここで変更します。
+     同じフォルダにある "data.json" を読み込む設定です。
+     将来的にAPIのURLに置き換えることもできます。
+     例: const DATA_SOURCE = "https://example.com/api/line-data";
+   ============================================================ */
+const DATA_SOURCE = "data.json";
+
+/* ============================================================
+   カラー定義（グラフの色設定）
+   ============================================================ */
+const COLORS = {
+  daily:       "#06B6D4",      // 日別棒グラフ（ティール）
+  cumulative:  "#00B900",      // 累計折れ線（LINEグリーン）
+  hourly:      "#0EA5E9",      // 時間帯棒グラフ
+  filtered:    "#F59E0B",      // フィルター棒グラフ（アンバー）
+  pie: [                       // 円グラフの各色
+    "#06B6D4", "#00B900", "#F59E0B", "#EF4444", "#8B5CF6",
+    "#EC4899", "#10B981", "#F97316"
+  ],
+};
+
+/* ============================================================
+   「info_○○」カラムの日本語ラベルマッピング
+   ============================================================
+   JSONのキー名が増えた場合はここに追記してください。
+   ============================================================ */
+const LABEL_MAP = {
+  "info_ひかり":   "ひかり",
+  "info_でんき":   "でんき",
+  "info_WS":       "WS",
+  "info_モバイル": "モバイル",
+  "info_生活":     "生活",
+};
+
+/* ============================================================
+   グラフ③ 専用：各ボタンの色定義
+   ============================================================
+   キーはLABEL_MAPの「日本語ラベル後」の値と対応しています。
+   ============================================================ */
+const PIE_COLOR_MAP = {
+  "生活":     "#74B700",
+  "WS":       "#00AEEF",
+  "ひかり":   "#F58200",
+  "モバイル": "#FF0000",
+  "でんき":   "#FFD700",
+};
+
+/* ============================================================
+   グローバル変数
+   ============================================================ */
+let rawData = [];         // 読み込んだ元データ（配列）
+let chartInstances = {};  // Chart.jsのインスタンスを保持（更新・破棄に使用）
+
+/* ============================================================
+   エントリーポイント：ページ読み込み時に自動実行
+   ============================================================ */
+document.addEventListener("DOMContentLoaded", () => {
+  loadData();
+});
+
+/* ============================================================
+   【データ取得】loadData
+   ============================================================
+   data.json を fetch で読み込みます。
+   将来的にAPIのURLに差し替えるだけで動作します。
+   ============================================================ */
+async function loadData() {
+  showView("loading");
+  try {
+    const response = await fetch(DATA_SOURCE);
+    if (!response.ok) {
+      throw new Error(`HTTPエラー: ${response.status} ${response.statusText}`);
+    }
+    const data = await response.json();
+
+    // データが配列かチェック
+    if (!Array.isArray(data)) {
+      throw new Error("データ形式が正しくありません（配列ではありません）");
+    }
+
+    // データが0件の場合
+    if (data.length === 0) {
+      showView("empty");
+      return;
+    }
+
+    rawData = data;
+    initDashboard();
+
+  } catch (err) {
+    console.error("データ読み込みエラー:", err);
+    document.getElementById("error-message").textContent =
+      `データの読み込みに失敗しました：${err.message}`;
+    showView("error");
+  }
+}
+
+/* ============================================================
+   【初期化】initDashboard
+   ============================================================
+   データ読み込み後、ダッシュボード全体を初期化します。
+   ============================================================ */
+function initDashboard() {
+  // 最終更新日時を表示
+  document.getElementById("last-updated").textContent =
+    new Date().toLocaleString("ja-JP");
+
+  // KPI（概要）の計算・表示
+  renderSummary();
+
+  // グラフ①②③を描画
+  renderDailyChart();
+  renderHourlyChart();
+  renderPieChart();
+
+  // グラフ④の日付プルダウンを構築
+  buildDateSelect();
+
+  // ========================================================
+  // 【追加⑤】グラフ⑤：日別ブロック数グラフを描画
+  // ========================================================
+  renderBlockedDailyChart();
+  // /追加⑤
+
+  // ダッシュボード全体を表示
+  showView("dashboard");
+}
+
+/* ============================================================
+   【表示切替】showView
+   ============================================================
+   "loading" / "error" / "empty" / "dashboard" のいずれかを
+   文字列で指定して、対応するDOMを表示します。
+   ============================================================ */
+function showView(view) {
+  document.getElementById("loading-view").style.display  = view === "loading"   ? "" : "none";
+  document.getElementById("error-view").style.display    = view === "error"     ? "" : "none";
+  document.getElementById("empty-view").style.display    = view === "empty"     ? "" : "none";
+  document.getElementById("dashboard").style.display     = view === "dashboard" ? "flex" : "none";
+}
+
+/* ============================================================
+   【データ処理】parseDate / parseHour
+   ============================================================
+   "2026-02-27 10:34" 形式から日付・時刻を取り出す関数。
+   ============================================================ */
+function parseDate(createdAt) {
+  // スペースで分割して日付部分（左側）を返す
+  return (createdAt || "").split(" ")[0] || "";
+}
+
+function parseHour(createdAt) {
+  // スペースで分割して時刻部分（右側）の "HH" を数値で返す
+  const timePart = (createdAt || "").split(" ")[1] || "";
+  const hour = parseInt(timePart.split(":")[0], 10);
+  return isNaN(hour) ? null : hour;
+}
+
+/* ============================================================
+   【集計処理】aggregateByDate
+   ============================================================
+   日付ごとの登録件数を集計して返します。
+   戻り値: { "2026-02-27": 3, "2026-02-28": 2, ... }
+   ============================================================ */
+function aggregateByDate(data) {
+  const result = {};
+  for (const row of data) {
+    const d = parseDate(row.created_at);
+    if (!d) continue;
+    result[d] = (result[d] || 0) + 1;
+  }
+  return result;
+}
+
+/* ============================================================
+   【集計処理】aggregateByHour
+   ============================================================
+   時間帯ごとの登録件数を集計して返します（0〜23時）。
+   戻り値: { 0: 0, 1: 0, ..., 10: 5, ... }
+   ============================================================ */
+function aggregateByHour(data) {
+  const result = {};
+  for (let h = 0; h < 24; h++) result[h] = 0; // 0〜23時を初期化
+  for (const row of data) {
+    const h = parseHour(row.created_at);
+    if (h !== null) result[h] = (result[h] || 0) + 1;
+  }
+  return result;
+}
+
+/* ============================================================
+   【集計処理】aggregateInfoButtons
+   ============================================================
+   各「info_○○」カラムの合計値を集計します。
+   戻り値: { "info_ひかり": 12, "info_でんき": 8, ... }
+   ============================================================ */
+function aggregateInfoButtons(data) {
+  const result = {};
+  // JSONの最初のレコードからキー名を取得
+  const infoKeys = Object.keys(data[0] || {}).filter(k => k.startsWith("info_"));
+  for (const key of infoKeys) result[key] = 0;
+  for (const row of data) {
+    for (const key of infoKeys) {
+      result[key] = (result[key] || 0) + (Number(row[key]) || 0);
+    }
+  }
+  return result;
+}
+
+/* ============================================================
+   【表示】renderSummary
+   ============================================================
+   概要バナー（総登録者数・期間・1日平均）を表示します。
+   【追加①】ブロック人数も合わせて集計・表示します。
+   ============================================================ */
+function renderSummary() {
+  const total = rawData.length;
+  const dateMap = aggregateByDate(rawData);
+  const sortedDates = Object.keys(dateMap).sort();
+  const days = sortedDates.length;
+
+  document.getElementById("kpi-total").innerHTML = `${total}<span>人</span>`;
+  document.getElementById("kpi-days").innerHTML  = `${days}<span>日間</span>`;
+  document.getElementById("kpi-avg").innerHTML   =
+    `${days > 0 ? (total / days).toFixed(1) : "—"}<span>人/日</span>`;
+
+  if (sortedDates.length > 0) {
+    document.getElementById("kpi-date-range").textContent =
+      `${sortedDates[0]} 〜 ${sortedDates[sortedDates.length - 1]}`;
+  }
+
+  // ========================================================
+  // 【追加①】ブロック人数の集計・表示
+  // Number()で型変換してから比較（文字列 "1" にも対応）// 型変換対応
+  // ========================================================
+  const blockedCount = rawData.filter(row => Number(row.blocked_flag) === 1).length;
+  const blockedRate  = total > 0 ? ((blockedCount / total) * 100).toFixed(1) : "0.0";
+  document.getElementById("kpi-blocked").innerHTML =
+    `${blockedCount}<span>人</span>`;
+  document.getElementById("kpi-blocked-rate").textContent =
+    `全体の ${blockedRate}%`;
+  // /追加①
+}
+
+/* ============================================================
+   【グラフ①】renderDailyChart
+   ============================================================
+   棒グラフ（新規登録数）＋折れ線（累計）のデュアルグラフ。
+   ============================================================ */
+function renderDailyChart() {
+  const dateMap   = aggregateByDate(rawData);
+  const dates     = Object.keys(dateMap).sort();
+  const dailyCounts = dates.map(d => dateMap[d]);
+
+  // 累計を計算（前の値を積み重ねる）
+  let cumulative = 0;
+  const cumulativeCounts = dailyCounts.map(v => (cumulative += v));
+
+  // 既存チャートがあれば破棄
+  destroyChart("daily");
+
+  const ctx = document.getElementById("chart-daily").getContext("2d");
+  chartInstances["daily"] = new Chart(ctx, {
+    data: {
+      labels: dates,
+      datasets: [
+        {
+          // 棒グラフ：新規登録数
+          type: "bar",
+          label: "新規登録数",
+          data: dailyCounts,
+          backgroundColor: COLORS.daily + "CC",
+          borderColor: COLORS.daily,
+          borderWidth: 1.5,
+          borderRadius: 5,
+          yAxisID: "y",  // 左軸
+        },
+        {
+          // 折れ線グラフ：累計
+          type: "line",
+          label: "累計登録数",
+          data: cumulativeCounts,
+          borderColor: COLORS.cumulative,
+          backgroundColor: "transparent",
+          borderWidth: 2.5,
+          pointBackgroundColor: COLORS.cumulative,
+          pointRadius: 4,
+          tension: 0.3,
+          yAxisID: "y2", // 右軸
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { position: "top" },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}人`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: "#F0F0F0" },
+          ticks: { font: { size: 11 } },
+        },
+        y: {
+          // 左軸：新規登録数
+          type: "linear",
+          position: "left",
+          beginAtZero: true,
+          title: { display: true, text: "新規登録数（人）", font: { size: 11 } },
+          grid: { color: "#F0F0F0" },
+          ticks: {
+            stepSize: 100,           // 100人単位で目盛りを表示
+            callback: v => `${v}人`,
+          },
+        },
+        y2: {
+          // 右軸：累計
+          type: "linear",
+          position: "right",
+          beginAtZero: true,
+          title: { display: true, text: "累計（人）", font: { size: 11 } },
+          grid: { drawOnChartArea: false }, // 右軸のグリッドは非表示
+          ticks: {
+            stepSize: 100,           // 100人単位で目盛りを表示
+            callback: v => `${v}人`,
+          },
+        },
+      },
+    },
+  });
+}
+
+/* ============================================================
+   【グラフ②】renderHourlyChart
+   ============================================================
+   全期間の時間帯別登録数を棒グラフで表示。
+   ============================================================ */
+function renderHourlyChart() {
+  const hourMap = aggregateByHour(rawData);
+  const hours   = Array.from({ length: 24 }, (_, i) => i);
+  const counts  = hours.map(h => hourMap[h]);
+  const labels  = hours.map(h => `${h}時`);   // 「hh時」形式に変更
+
+  destroyChart("hourly");
+
+  const ctx = document.getElementById("chart-hourly").getContext("2d");
+  chartInstances["hourly"] = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "登録数",
+        data: counts,
+        backgroundColor: COLORS.hourly + "BB",
+        borderColor: COLORS.hourly,
+        borderWidth: 1.5,
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.parsed.y}人`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: "#F0F0F0" },
+          ticks: { font: { size: 10 }, maxRotation: 0 },
+        },
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "登録数（人）", font: { size: 11 } },
+          grid: { color: "#F0F0F0" },
+          ticks: {
+            stepSize: 100,           // 100人単位で目盛りを表示
+            callback: v => `${v}人`,
+          },
+        },
+      },
+    },
+  });
+}
+
+/* ============================================================
+   【グラフ③】renderPieChart
+   ============================================================
+   各「info_○○」カラムの合計を円グラフで表示。
+   ・各色はPIE_COLOR_MAPで定義
+   ・凡例にパーセンテージを表示
+   ・ドーナツ中央に合計値を表示
+   ============================================================ */
+function renderPieChart() {
+  const infoMap = aggregateInfoButtons(rawData);
+  const keys    = Object.keys(infoMap);
+  const labels  = keys.map(k => LABEL_MAP[k] || k);
+  const values  = keys.map(k => infoMap[k]);
+  const total   = values.reduce((a, b) => a + b, 0);
+
+  // 各ラベルに対応する色をPIE_COLOR_MAPから取得（未定義はグレー）
+  const bgColors = labels.map(l => PIE_COLOR_MAP[l] || "#AAAAAA");
+
+  // 全て0の場合はメッセージを表示
+  if (total === 0) {
+    document.getElementById("chart-pie").closest(".pie-layout-compact").innerHTML =
+      "<p style='color:var(--color-muted);font-size:13px;'>アクションデータがありません</p>";
+    return;
+  }
+
+  destroyChart("pie");
+
+  // ============================================================
+  // カスタムプラグイン：ドーナツ中央に合計値を描画
+  // ============================================================
+  const centerTextPlugin = {
+    id: "centerText",
+    afterDraw(chart) {
+      const { ctx, chartArea: { left, right, top, bottom } } = chart;
+      const cx = (left + right) / 2;
+      const cy = (top  + bottom) / 2;
+      ctx.save();
+      // 「合計」ラベル
+      ctx.font = "bold 12px 'Hiragino Kaku Gothic ProN', sans-serif";
+      ctx.fillStyle = "#718096";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("合計", cx, cy - 14);
+      // 合計数値
+      ctx.font = "bold 22px 'Hiragino Kaku Gothic ProN', sans-serif";
+      ctx.fillStyle = "#1A202C";
+      ctx.fillText(`${total}`, cx, cy + 8);
+      ctx.restore();
+    },
+  };
+
+  const ctx = document.getElementById("chart-pie").getContext("2d");
+  chartInstances["pie"] = new Chart(ctx, {
+    type: "doughnut",
+    plugins: [centerTextPlugin],   // 中央テキストプラグインを登録
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: bgColors,
+        borderWidth: 2,
+        borderColor: "#ffffff",
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: {
+            font: { size: 13 },
+            padding: 14,
+            // 凡例ラベルにパーセンテージを付与
+            generateLabels(chart) {
+              const data = chart.data;
+              return data.labels.map((label, i) => {
+                const val = data.datasets[0].data[i];
+                const pct = total > 0 ? ((val / total) * 100).toFixed(1) : "0.0";
+                return {
+                  text: `${label}  ${pct}%`,
+                  fillStyle: data.datasets[0].backgroundColor[i],
+                  strokeStyle: "#ffffff",
+                  lineWidth: 2,
+                  index: i,
+                  hidden: false,
+                };
+              });
+            },
+          },
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+              return `${ctx.label}: ${ctx.parsed}回（${pct}%）`;
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+/* ============================================================
+   【グラフ④】buildDateSelect
+   ============================================================
+   日付プルダウンを構築し、最新日付を自動選択します。
+   ============================================================ */
+function buildDateSelect() {
+  const dateMap     = aggregateByDate(rawData);
+  const sortedDates = Object.keys(dateMap).sort();
+  const select      = document.getElementById("date-select");
+
+  // オプションをリセット
+  select.innerHTML = "";
+
+  if (sortedDates.length === 0) {
+    select.innerHTML = "<option>データなし</option>";
+    return;
+  }
+
+  for (const d of sortedDates) {
+    const opt = document.createElement("option");
+    opt.value       = d;
+    opt.textContent = `${d}（${dateMap[d]}人）`;
+    select.appendChild(opt);
+  }
+
+  // 最新日付（末尾）を初期選択
+  select.value = sortedDates[sortedDates.length - 1];
+
+  // 初回描画
+  renderFilteredChart(select.value);
+}
+
+/* ============================================================
+   【イベント】onDateFilterChange
+   ============================================================
+   日付プルダウンが変更されたときに呼び出されます。
+   ============================================================ */
+function onDateFilterChange() {
+  const selectedDate = document.getElementById("date-select").value;
+  if (selectedDate) renderFilteredChart(selectedDate);
+}
+
+/* ============================================================
+   【グラフ④】renderFilteredChart
+   ============================================================
+   選択された日付のデータのみ抽出し、時間帯別棒グラフを描画。
+   ============================================================ */
+function renderFilteredChart(selectedDate) {
+  // 選択日のデータのみ絞り込む
+  const filtered = rawData.filter(row => parseDate(row.created_at) === selectedDate);
+
+  const hourMap = aggregateByHour(filtered);
+  const hours   = Array.from({ length: 24 }, (_, i) => i);
+  const counts  = hours.map(h => hourMap[h]);
+  const labels  = hours.map(h => `${h}時`);   // 「hh時」形式に変更
+
+  destroyChart("filtered");
+
+  const ctx = document.getElementById("chart-filtered").getContext("2d");
+  chartInstances["filtered"] = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: `${selectedDate} の登録数`,
+        data: counts,
+        backgroundColor: COLORS.filtered + "BB",
+        borderColor: COLORS.filtered,
+        borderWidth: 1.5,
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.parsed.y}人`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: "#F0F0F0" },
+          ticks: { font: { size: 10 }, maxRotation: 0 },
+        },
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: `登録数（人）`,
+            font: { size: 11 },
+          },
+          grid: { color: "#F0F0F0" },
+          ticks: {
+            stepSize: 1,
+            callback: v => `${v}人`,
+          },
+        },
+      },
+    },
+  });
+}
+
+/* ============================================================
+   【追加④】【集計処理】aggregateBlockedByDate
+   ============================================================
+   blocked_flag === 1 のレコードを blocked_at の日付で集計します。
+   parseDate関数を再利用して日付を抽出します。
+   戻り値: { "2026-03-01": 2, "2026-03-02": 1, ... }
+   ============================================================ */
+function aggregateBlockedByDate(data) {
+  const result = {};
+  for (const row of data) {
+    // Number()で型変換してから比較（文字列 "1" にも対応）// 型変換対応
+    if (Number(row.blocked_flag) !== 1) continue;
+    // blocked_at が空の場合はスキップ
+    const d = parseDate(row.blocked_at);
+    if (!d) continue;
+    result[d] = (result[d] || 0) + 1;
+  }
+  return result;
+}
+
+/* ============================================================
+   【追加④】【グラフ⑤】renderBlockedDailyChart
+   ============================================================
+   日別ブロック数を棒グラフで表示します。
+   ・blocked_flag === 1 のレコードのみ対象
+   ・blocked_at を日付単位で集計
+   ・色：#EF4444 系（赤系）
+   ============================================================ */
+function renderBlockedDailyChart() {
+  const blockedMap = aggregateBlockedByDate(rawData);
+  const dates      = Object.keys(blockedMap).sort();
+  const counts     = dates.map(d => blockedMap[d]);
+
+  // ブロックデータが0件の場合は「データなし」メッセージを表示
+  if (dates.length === 0) {
+    const canvas = document.getElementById("chart-blocked");
+    if (canvas) {
+      canvas.style.display = "none";
+      const msg = document.createElement("p");
+      msg.style.cssText = "color:var(--color-muted);font-size:13px;text-align:center;padding:40px 0;";
+      msg.textContent = "ブロックデータがありません";
+      canvas.parentNode.appendChild(msg);
+    }
+    return;
+  }
+
+  // 既存チャートがあれば破棄
+  destroyChart("blocked");
+
+  const ctx = document.getElementById("chart-blocked").getContext("2d");
+  chartInstances["blocked"] = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: dates,
+      datasets: [{
+        label: "ブロック数",
+        data: counts,
+        backgroundColor: "#EF4444BB",  // 赤系（透明度付き）
+        borderColor: "#EF4444",
+        borderWidth: 1.5,
+        borderRadius: 5,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },   // 凡例は非表示
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.parsed.y}人`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: "#F0F0F0" },
+          ticks: { font: { size: 11 } },
+        },
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "ブロック数（人）", font: { size: 11 } },
+          grid: { color: "#F0F0F0" },
+          ticks: {
+            stepSize: 1,
+            callback: v => `${v}人`,
+          },
+        },
+      },
+    },
+  });
+}
+/* /追加④ */
+
+/* ============================================================
+   【ユーティリティ】destroyChart
+   ============================================================
+   既存のチャートインスタンスを破棄します。
+   グラフを再描画する前に必ず呼び出してください。
+   ============================================================ */
+function destroyChart(key) {
+  if (chartInstances[key]) {
+    chartInstances[key].destroy();
+    delete chartInstances[key];
+  }
+}
+</script>
+
+</body>
+</html>
