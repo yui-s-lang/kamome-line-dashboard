@@ -746,8 +746,8 @@ function renderSummary() {
   const blockedCount = rawData.filter(row => Number(row.blocked_flag) === 1).length;
   const blockedRate  = total > 0 ? ((blockedCount / total) * 100).toFixed(1) : "0.0";
 
-  // 有効友だち数 = 総登録者数 - ブロック人数
-  const activeCount = total - blockedCount;
+  // 有効友だち数 = blocked_flag が 0 のレコード数（型変換対応）
+  const activeCount = rawData.filter(row => Number(row.blocked_flag) === 0).length;
   document.getElementById("kpi-total").innerHTML = `${activeCount}<span>人</span>`;
 
   document.getElementById("kpi-blocked").innerHTML =
