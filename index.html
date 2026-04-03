@@ -377,9 +377,9 @@
     <!-- 概要バナー -->
     <div class="summary-bar" id="summary-bar">
       <div class="summary-item accent">
-        <div class="label">総登録者数</div>
+        <div class="label">有効友だち数</div><!-- 名称変更：総登録者数 → 有効友だち数 -->
         <div class="value" id="kpi-total">—<span>人</span></div>
-        <div class="sub" id="kpi-period">—</div>
+        <div class="sub" id="kpi-period">総登録数からブロックを除いた人数</div>
       </div>
       <!-- ========================================================
            【追加①】ブロック人数KPIカード
@@ -719,8 +719,9 @@ function aggregateInfoButtons(data) {
 /* ============================================================
    【表示】renderSummary
    ============================================================
-   概要バナー（総登録者数・期間・1日平均）を表示します。
+   概要バナー（有効友だち数・期間・1日平均）を表示します。
    【追加①】ブロック人数も合わせて集計・表示します。
+   有効友だち数 = 総登録者数 - ブロック人数
    ============================================================ */
 function renderSummary() {
   const total = rawData.length;
@@ -728,7 +729,7 @@ function renderSummary() {
   const sortedDates = Object.keys(dateMap).sort();
   const days = sortedDates.length;
 
-  document.getElementById("kpi-total").innerHTML = `${total}<span>人</span>`;
+  // kpi-total（有効友だち数）は blockedCount 確定後に下で設定
   document.getElementById("kpi-days").innerHTML  = `${days}<span>日間</span>`;
   document.getElementById("kpi-avg").innerHTML   =
     `${days > 0 ? (total / days).toFixed(1) : "—"}<span>人/日</span>`;
@@ -744,6 +745,11 @@ function renderSummary() {
   // ========================================================
   const blockedCount = rawData.filter(row => Number(row.blocked_flag) === 1).length;
   const blockedRate  = total > 0 ? ((blockedCount / total) * 100).toFixed(1) : "0.0";
+
+  // 有効友だち数 = 総登録者数 - ブロック人数
+  const activeCount = total - blockedCount;
+  document.getElementById("kpi-total").innerHTML = `${activeCount}<span>人</span>`;
+
   document.getElementById("kpi-blocked").innerHTML =
     `${blockedCount}<span>人</span>`;
   document.getElementById("kpi-blocked-rate").textContent =
